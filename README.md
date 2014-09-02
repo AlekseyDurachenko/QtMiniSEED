@@ -1,4 +1,4 @@
 QtMiniSEED
 ==========
 
-The Qt wrapper for libmseed
+The Qt wrapper for libmseed (read miniseed from QIODevice)
