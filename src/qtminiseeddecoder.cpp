@@ -15,46 +15,44 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "qtminiseeddecoder.h"
 
-typedef struct __blkhdr_t
-{
+
+typedef struct __blkhdr_t {
     quint16 type;
     quint16 offset;
 }
 blkhdr_t;
 
+
 QtMiniSEEDDecoder::QtMiniSEEDDecoder(qint64 expectedSize, bool blocked)
 {
-    mExpectedSize = expectedSize;
-    mRecord = new char[expectedSize];
-    mIsBlocked = blocked;
+    m_expectedSize = expectedSize;
+    m_record = new char[expectedSize];
+    m_isBlocked = blocked;
 
     reset();
 }
 
 QtMiniSEEDDecoder::~QtMiniSEEDDecoder()
 {
-    delete []mRecord;
+    delete []m_record;
 }
 
 QtMiniSEEDRecord *QtMiniSEEDDecoder::readRecord(QIODevice *device)
 {
     // algorithm
-    try
-    {
-        while (device->bytesAvailable())
-        {
+    try {
+        while (device->bytesAvailable()) {
             resize();
 
             qint64 toRead = rsize - asize;
             if (device->bytesAvailable() < toRead)
                 toRead = device->bytesAvailable();
 
-            if (device->read(&mRecord[offset+asize], toRead) != toRead)
+            if (device->read(&m_record[offset + asize], toRead) != toRead)
                 throw ReadError;
 
             asize += toRead;
-            if (rsize == asize)
-            {
+            if (rsize == asize) {
                 asize = 0;
                 QtMiniSEEDRecord *record = iteration();
                 if (record)
@@ -64,22 +62,19 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::readRecord(QIODevice *device)
 
         throw FewDataError;
     }
-    catch (Error error)
-    {
-        mLastError = error;
+    catch (Error error) {
+        m_lastError = error;
     }
 
-    // error   
+    // error
     return 0;
 }
 
 QtMiniSEEDRecord *QtMiniSEEDDecoder::readRecord(const char *data, int size, int *position)
 {
     // algorithm
-    try
-    {
-        while (*position < size)
-        {
+    try {
+        while (*position < size) {
             resize();
 
             qint64 toRead = rsize - asize;
@@ -87,12 +82,11 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::readRecord(const char *data, int size, int 
             if (avaible < toRead)
                 toRead = avaible;
 
-            qMemCopy(&mRecord[offset+asize], &data[*position], toRead);
+            qMemCopy(&m_record[offset + asize], &data[*position], toRead);
             *position += toRead;
 
             asize += toRead;
-            if (rsize == asize)
-            {
+            if (rsize == asize) {
                 asize = 0;
                 QtMiniSEEDRecord *record = iteration();
                 if (record)
@@ -102,9 +96,8 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::readRecord(const char *data, int size, int 
 
         throw FewDataError;
     }
-    catch (Error error)
-    {
-        mLastError = error;
+    catch (Error error) {
+        m_lastError = error;
     }
 
     // error
@@ -119,13 +112,12 @@ void QtMiniSEEDDecoder::reset()
     is_end = 0;
     bitswp = 0;
     r_type = 0;
-    mLastError = NoError;
+    m_lastError = NoError;
 }
 
 QString QtMiniSEEDDecoder::errorString() const
 {
-    switch (lastError())
-    {
+    switch (lastError()) {
     case NoError:
         return QObject::tr("No Error", "QgeMiniSeedRecord");
     case FewDataError:
@@ -139,7 +131,7 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::decode(char *data, int size, QString *reaso
 {
     Q_UNUSED(reason);
 
-    MSRecord* msrec = 0;
+    MSRecord *msrec = 0;
     msr_unpack(data, size, &msrec, true, 1);
     return new QtMiniSEEDRecord(msrec);
 }
@@ -155,8 +147,7 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::decode(QIODevice *device, int size, QString
 {
     Q_UNUSED(reason);
 
-    if (device->bytesAvailable() >= size)
-    {
+    if (device->bytesAvailable() >= size) {
         MSRecord *msrec = 0;
         char *data = new char[size];
         device->read(data, size);
@@ -170,40 +161,37 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::decode(QIODevice *device, int size, QString
 
 void QtMiniSEEDDecoder::resize()
 {
-    mRealRecordLen = offset + rsize;
-    if ((mRealRecordLen  > mExpectedSize && !is_end) || (mRealRecordLen  != mExpectedSize && is_end))
-    {
-        while (mExpectedSize < mRealRecordLen)
-            mExpectedSize *= 2;
+    m_realRecordLen = offset + rsize;
+    if ((m_realRecordLen  > m_expectedSize && !is_end) || (m_realRecordLen  != m_expectedSize && is_end)) {
+        while (m_expectedSize < m_realRecordLen)
+            m_expectedSize *= 2;
 
         char *record = 0;
-        record = new char[mExpectedSize];
-        qMemCopy(record, mRecord, offset);
-        delete [] mRecord;
-        mRecord = record;
+        record = new char[m_expectedSize];
+        qMemCopy(record, m_record, offset);
+        delete [] m_record;
+        m_record = record;
     }
 }
 
 QtMiniSEEDRecord *QtMiniSEEDDecoder::iteration()
 {
     // current ptr for quick access
-    char *curptr = &mRecord[offset];
+    char *curptr = &m_record[offset];
     offset += rsize;
 
     // MiniSEED record complitly readed
-    if (is_end == 1)
-    {
+    if (is_end == 1) {
         // reset to ready next record
         reset();
 
         // create the miniseed record
-        MSRecord* msrec = 0;
-        msr_unpack(mRecord, mRealRecordLen, &msrec, true, 1);
+        MSRecord *msrec = 0;
+        msr_unpack(m_record, m_realRecordLen, &msrec, true, 1);
         return new QtMiniSEEDRecord(msrec);
     }
     // FSDH readed
-    else if (r_type == 0)
-    {
+    else if (r_type == 0) {
         // check for correct FSDH
         if (!MS_ISVALIDHEADER(curptr))
             throw FormatError;
@@ -213,32 +201,28 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::iteration()
         rsize = sizeof(blkhdr_t);
 
         // Check byteswap needed by year
-        if ((((fsdh_s*)curptr)->start_time.year < 1900) || (((fsdh_s*)curptr)->start_time.year > 2050))
+        if ((((fsdh_s *)curptr)->start_time.year < 1900) || (((fsdh_s *)curptr)->start_time.year > 2050))
             bitswp = 1;
     }
     // blkhdr readed
-    else if (r_type == 1)
-    {
-        quint16 hdr_type = ((blkhdr_t*)curptr)->type;
-        quint16 hdr_offset = ((blkhdr_t*)curptr)->offset;
+    else if (r_type == 1) {
+        quint16 hdr_type = ((blkhdr_t *)curptr)->type;
+        quint16 hdr_offset = ((blkhdr_t *)curptr)->offset;
 
         // bitswap if needed
-        if (bitswp)
-        {
+        if (bitswp) {
             ms_gswap2(&hdr_type);
             ms_gswap2(&hdr_offset);
         }
 
         //
-        if (hdr_type == 1000)
-        {
+        if (hdr_type == 1000) {
             // start read the 1000blk
             r_type = 3;
             //rsize = hdr_offset - offset;
             rsize = sizeof(blkt_1000_s);
         }
-        else if (hdr_offset != 0)
-        {
+        else if (hdr_offset != 0) {
             // next blocket offset cannot point early than the current offset
             if (hdr_offset < offset)
                 throw UnexpectedOffsetError;
@@ -247,22 +231,19 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::iteration()
             r_type = 2;
             rsize = hdr_offset - offset;
         }
-        else
-        {
+        else {
             throw UnexpectedEndError;
         }
     }
     // data readed
-    else if (r_type == 2)
-    {
+    else if (r_type == 2) {
         r_type = 1;
         rsize = sizeof(blkhdr_t);
     }
     // blk1000 breaded
-    else if (r_type == 3)
-    {
+    else if (r_type == 3) {
         is_end = 1;
-        rsize = (1 << ((blkt_1000_s*)curptr)->reclen) - offset;
+        rsize = (1 << ((blkt_1000_s *)curptr)->reclen) - offset;
     }
 
     return 0;

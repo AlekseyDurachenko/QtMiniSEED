@@ -16,8 +16,10 @@
 #ifndef QTMINISEEDDECODER_H
 #define QTMINISEEDDECODER_H
 
+
 #include "qtminiseedrecord.h"
 #include <QIODevice>
+
 
 /*!
  * \brief The QgeMiniSeedDecoder provides the functionality to decode the miniseed
@@ -26,8 +28,7 @@
 class QtMiniSEEDDecoder
 {
 public:
-    enum Error
-    {
+    enum Error {
         NoError = 0,
         FewDataError,
         FormatError,
@@ -38,11 +39,13 @@ public:
     };
 
     explicit QtMiniSEEDDecoder(qint64 expectedSize = 4096, bool blocked = true);
-    ~QtMiniSEEDDecoder();
+    virtual ~QtMiniSEEDDecoder();
 
     QtMiniSEEDRecord *readRecord(QIODevice *device);
     QtMiniSEEDRecord *readRecord(const char *data, int size, int *position);
+
     void reset();
+
     inline int lastError() const;
     QString errorString() const;
 
@@ -55,11 +58,11 @@ private:
     QtMiniSEEDRecord *iteration();
 
 private:
-    qint64 mExpectedSize;
-    qint64 mRealRecordLen;
-    char *mRecord;
-    Error mLastError;
-    bool mIsBlocked;
+    qint64 m_expectedSize;
+    qint64 m_realRecordLen;
+    char *m_record;
+    Error m_lastError;
+    bool m_isBlocked;
 
     qint64 offset;
     // current read processor state
@@ -73,7 +76,6 @@ private:
     // 2: DATA
     // 3: 1000 blk
     qint8 r_type;
-
 };
 
 /*!
@@ -82,7 +84,8 @@ private:
  */
 int QtMiniSEEDDecoder::lastError() const
 {
-    return mLastError;
+    return m_lastError;
 }
+
 
 #endif // QTMINISEEDDECODER_H
