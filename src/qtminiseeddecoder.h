@@ -25,7 +25,7 @@
  * \brief The QgeMiniSeedDecoder provides the functionality to decode the miniseed
  * stream into discret miniseed records. \see QgeMiniSeedRecord
  */
-class QtMiniSEEDDecoder
+class QtMiniSeedDecoder
 {
 public:
     enum Error {
@@ -38,24 +38,24 @@ public:
         UnknowError = 128
     };
 
-    explicit QtMiniSEEDDecoder(qint64 expectedSize = 4096, bool blocked = true);
-    virtual ~QtMiniSEEDDecoder();
+    explicit QtMiniSeedDecoder(qint64 expectedSize = 4096, bool blocked = true);
+    virtual ~QtMiniSeedDecoder();
 
-    QtMiniSEEDRecord *readRecord(QIODevice *device);
-    QtMiniSEEDRecord *readRecord(const char *data, int size, int *position);
+    QtMiniSeedRecord readRecord(QIODevice *device);
+    QtMiniSeedRecord readRecord(const char *data, int size, int *position);
 
     void reset();
 
     inline int lastError() const;
     QString errorString() const;
 
-    static QtMiniSEEDRecord *decode(char *data, int size, QString *reason = 0);
-    static QtMiniSEEDRecord *decode(const char *data, int size, QString *reason = 0);
-    static QtMiniSEEDRecord *decode(QIODevice *device, int size, QString *reason = 0);
+    static QtMiniSeedRecord decode(char *data, int size, QString *reason = 0);
+    static QtMiniSeedRecord decode(const char *data, int size, QString *reason = 0);
+    static QtMiniSeedRecord decode(QIODevice *device, int size, QString *reason = 0);
 
 private:
     void resize();
-    QtMiniSEEDRecord *iteration();
+    QtMiniSeedRecord iteration();
 
 private:
     qint64 m_expectedSize;
@@ -82,7 +82,7 @@ private:
  * \brief QgeMiniSeedDecoder::lastError
  * \return last error of the stream processing
  */
-int QtMiniSEEDDecoder::lastError() const
+int QtMiniSeedDecoder::lastError() const
 {
     return m_lastError;
 }

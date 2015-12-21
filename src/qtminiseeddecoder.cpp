@@ -23,7 +23,7 @@ typedef struct __blkhdr_t {
 blkhdr_t;
 
 
-QtMiniSEEDDecoder::QtMiniSEEDDecoder(qint64 expectedSize, bool blocked)
+QtMiniSeedDecoder::QtMiniSeedDecoder(qint64 expectedSize, bool blocked)
 {
     m_expectedSize = expectedSize;
     m_record = new char[expectedSize];
@@ -32,12 +32,12 @@ QtMiniSEEDDecoder::QtMiniSEEDDecoder(qint64 expectedSize, bool blocked)
     reset();
 }
 
-QtMiniSEEDDecoder::~QtMiniSEEDDecoder()
+QtMiniSeedDecoder::~QtMiniSeedDecoder()
 {
     delete []m_record;
 }
 
-QtMiniSEEDRecord *QtMiniSEEDDecoder::readRecord(QIODevice *device)
+QtMiniSeedRecord QtMiniSeedDecoder::readRecord(QIODevice *device)
 {
     // algorithm
     try {
@@ -54,8 +54,8 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::readRecord(QIODevice *device)
             asize += toRead;
             if (rsize == asize) {
                 asize = 0;
-                QtMiniSEEDRecord *record = iteration();
-                if (record)
+                QtMiniSeedRecord record = iteration();
+                if (!record.isNull())
                     return record;
             }
         }
@@ -67,10 +67,10 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::readRecord(QIODevice *device)
     }
 
     // error
-    return 0;
+    return QtMiniSeedRecord();
 }
 
-QtMiniSEEDRecord *QtMiniSEEDDecoder::readRecord(const char *data, int size, int *position)
+QtMiniSeedRecord QtMiniSeedDecoder::readRecord(const char *data, int size, int *position)
 {
     // algorithm
     try {
@@ -88,8 +88,8 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::readRecord(const char *data, int size, int 
             asize += toRead;
             if (rsize == asize) {
                 asize = 0;
-                QtMiniSEEDRecord *record = iteration();
-                if (record)
+                QtMiniSeedRecord record = iteration();
+                if (!record.isNull())
                     return record;
             }
         }
@@ -101,10 +101,10 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::readRecord(const char *data, int size, int 
     }
 
     // error
-    return 0;
+    return QtMiniSeedRecord();
 }
 
-void QtMiniSEEDDecoder::reset()
+void QtMiniSeedDecoder::reset()
 {
     offset = 0;
     rsize = sizeof(fsdh_s);
@@ -115,7 +115,7 @@ void QtMiniSEEDDecoder::reset()
     m_lastError = NoError;
 }
 
-QString QtMiniSEEDDecoder::errorString() const
+QString QtMiniSeedDecoder::errorString() const
 {
     switch (lastError()) {
     case NoError:
@@ -127,23 +127,23 @@ QString QtMiniSEEDDecoder::errorString() const
     return QString();
 }
 
-QtMiniSEEDRecord *QtMiniSEEDDecoder::decode(char *data, int size, QString *reason)
+QtMiniSeedRecord QtMiniSeedDecoder::decode(char *data, int size, QString *reason)
 {
     Q_UNUSED(reason);
 
     MSRecord *msrec = 0;
     msr_unpack(data, size, &msrec, true, 1);
-    return new QtMiniSEEDRecord(msrec);
+    return QtMiniSeedRecord(msrec);
 }
 
-QtMiniSEEDRecord *QtMiniSEEDDecoder::decode(const char *data, int size, QString *reason)
+QtMiniSeedRecord QtMiniSeedDecoder::decode(const char *data, int size, QString *reason)
 {
     char *tmp = new char[size];
     memcpy(tmp, data, size);
     return decode(tmp, size, reason);
 }
 
-QtMiniSEEDRecord *QtMiniSEEDDecoder::decode(QIODevice *device, int size, QString *reason)
+QtMiniSeedRecord QtMiniSeedDecoder::decode(QIODevice *device, int size, QString *reason)
 {
     Q_UNUSED(reason);
 
@@ -153,13 +153,13 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::decode(QIODevice *device, int size, QString
         device->read(data, size);
         msr_unpack(data, size, &msrec, true, 1);
         delete []data;
-        return new QtMiniSEEDRecord(msrec);
+        return QtMiniSeedRecord(msrec);
     }
 
-    return 0;
+    return QtMiniSeedRecord();
 }
 
-void QtMiniSEEDDecoder::resize()
+void QtMiniSeedDecoder::resize()
 {
     m_realRecordLen = offset + rsize;
     if ((m_realRecordLen  > m_expectedSize && !is_end) || (m_realRecordLen  != m_expectedSize && is_end)) {
@@ -174,7 +174,7 @@ void QtMiniSEEDDecoder::resize()
     }
 }
 
-QtMiniSEEDRecord *QtMiniSEEDDecoder::iteration()
+QtMiniSeedRecord QtMiniSeedDecoder::iteration()
 {
     // current ptr for quick access
     char *curptr = &m_record[offset];
@@ -188,7 +188,7 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::iteration()
         // create the miniseed record
         MSRecord *msrec = 0;
         msr_unpack(m_record, m_realRecordLen, &msrec, true, 1);
-        return new QtMiniSEEDRecord(msrec);
+        return QtMiniSeedRecord(msrec);
     }
     // FSDH readed
     else if (r_type == 0) {
@@ -246,5 +246,5 @@ QtMiniSEEDRecord *QtMiniSEEDDecoder::iteration()
         rsize = (1 << ((blkt_1000_s *)curptr)->reclen) - offset;
     }
 
-    return 0;
+    return QtMiniSeedRecord();
 }

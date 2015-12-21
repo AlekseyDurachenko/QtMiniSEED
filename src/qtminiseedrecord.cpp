@@ -14,30 +14,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "qtminiseedrecord.h"
+#include <QMetaType>
 
 
-QtMiniSEEDRecord::QtMiniSEEDRecord(MSRecord *record)
+QtMiniSeedRecord::QtMiniSeedRecord(MSRecord *record)
 {
-    m_record = record;
+    qRegisterMetaType<QtMiniSeedRecord>("QtMiniSEEDRecord");
+    d = new QtMiniSeedRecordData(record);
 }
 
-QtMiniSEEDRecord::~QtMiniSEEDRecord()
+QtMiniSeedRecord::QtMiniSeedRecord()
 {
-    msr_free(&m_record);
+    qRegisterMetaType<QtMiniSeedRecord>("QtMiniSEEDRecord");
+    d = new QtMiniSeedRecordData();
 }
 
-void QtMiniSEEDRecord::unpack(void *data, qint32 offset, qint32 count)
+QtMiniSeedRecord::QtMiniSeedRecord(const QtMiniSeedRecord &other)
+    : d(other.d)
 {
-    qMemCopy(data, &static_cast<char *>(m_record->datasamples)[offset * sampleSize()], sampleSize() * count);
 }
 
-QByteArray QtMiniSEEDRecord::toAscii() const
+QByteArray QtMiniSeedRecord::toAscii() const
 {
     if (sampleType() == Ascii) {
-        return QByteArray::fromRawData(reinterpret_cast<const char *>(m_record->datasamples),
+        return QByteArray::fromRawData(reinterpret_cast<const char *>(d->msrecord->datasamples),
                                        sampleSize() * sampleCount());
     }
 
     return QByteArray();
 }
-

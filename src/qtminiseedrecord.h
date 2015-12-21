@@ -17,19 +17,21 @@
 #define QTMINISEEDRECORD_H
 
 
-#include <libmseed.h>
+#include "qtminiseedrecorddata.h"
 #include <QString>
 
 
-class QtMiniSEEDRecord
+class QtMiniSeedRecord
 {
-    friend class QtMiniSEEDDecoder;
+    friend class QtMiniSeedDecoder;
 private:
-    explicit QtMiniSEEDRecord(MSRecord *record);
+    explicit QtMiniSeedRecord(MSRecord *record);
 public:
+    QtMiniSeedRecord();
+    QtMiniSeedRecord(const QtMiniSeedRecord &other);
     enum DataType { Unknow, Ascii, Int, Float, Double };
 
-    ~QtMiniSEEDRecord();
+    inline bool isNull() const;
 
     inline const QString network() const;
     inline const QString station() const;
@@ -43,59 +45,63 @@ public:
     inline DataType sampleType() const;
     inline qint32 sampleSize() const;
 
-    void unpack(void *data, qint32 offset, qint32 count);
     QByteArray toAscii() const;
 
     inline qint32 recordSize() const;
     inline const char *recordData() const;
 
 private:
-    MSRecord *m_record;
+    QExplicitlySharedDataPointer<QtMiniSeedRecordData> d;
 };
 
-const QString QtMiniSEEDRecord::network() const
+bool QtMiniSeedRecord::isNull() const
 {
-    return m_record->network;
+    return (d->msrecord == 0);
 }
 
-const QString QtMiniSEEDRecord::station() const
+const QString QtMiniSeedRecord::network() const
 {
-    return m_record->station;
+    return d->msrecord->network;
 }
 
-const QString QtMiniSEEDRecord::channel() const
+const QString QtMiniSeedRecord::station() const
 {
-    return m_record->channel;
+    return d->msrecord->station;
 }
 
-const QString QtMiniSEEDRecord::location() const
+const QString QtMiniSeedRecord::channel() const
 {
-    return m_record->location;
+    return d->msrecord->channel;
 }
 
-qint32 QtMiniSEEDRecord::sequenceNumber() const
+const QString QtMiniSeedRecord::location() const
 {
-    return m_record->sequence_number;
+    return d->msrecord->location;
 }
 
-qint64 QtMiniSEEDRecord::startTime() const
+qint32 QtMiniSeedRecord::sequenceNumber() const
 {
-    return m_record->starttime;
+    return d->msrecord->sequence_number;
 }
 
-double QtMiniSEEDRecord::sampleRate() const
+qint64 QtMiniSeedRecord::startTime() const
 {
-    return m_record->samprate;
+    return d->msrecord->starttime;
 }
 
-qint32 QtMiniSEEDRecord::sampleCount() const
+double QtMiniSeedRecord::sampleRate() const
 {
-    return m_record->samplecnt;
+    return d->msrecord->samprate;
 }
 
-QtMiniSEEDRecord::DataType QtMiniSEEDRecord::sampleType() const
+qint32 QtMiniSeedRecord::sampleCount() const
 {
-    switch (m_record->sampletype) {
+    return d->msrecord->samplecnt;
+}
+
+QtMiniSeedRecord::DataType QtMiniSeedRecord::sampleType() const
+{
+    switch (d->msrecord->sampletype) {
     case 'a':
         return Ascii;
     case 'i':
@@ -108,9 +114,9 @@ QtMiniSEEDRecord::DataType QtMiniSEEDRecord::sampleType() const
     return Unknow;
 }
 
-qint32 QtMiniSEEDRecord::sampleSize() const
+qint32 QtMiniSeedRecord::sampleSize() const
 {
-    switch (m_record->sampletype) {
+    switch (d->msrecord->sampletype) {
     case 'a':
         return 1;
     case 'i':
@@ -122,14 +128,15 @@ qint32 QtMiniSEEDRecord::sampleSize() const
     return 0;
 }
 
-qint32 QtMiniSEEDRecord::recordSize() const
+qint32 QtMiniSeedRecord::recordSize() const
 {
-    return m_record->reclen;
+    return d->msrecord->reclen;
 }
 
-const char *QtMiniSEEDRecord::recordData() const
+const char *QtMiniSeedRecord::recordData() const
 {
-    return m_record->record;
+    return d->msrecord->record;
 }
+
 
 #endif // QTMINISEEDRECORD_H
