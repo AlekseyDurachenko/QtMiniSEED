@@ -40,6 +40,7 @@ public:
 
     inline qint32 sequenceNumber() const;
     inline qint64 startTime() const;
+    inline qint64 endTime() const;
     inline double sampleRate() const;
     inline qint32 sampleCount() const;
     inline DataType sampleType() const;
@@ -87,6 +88,14 @@ qint32 QtMiniSeedRecord::sequenceNumber() const
 qint64 QtMiniSeedRecord::startTime() const
 {
     return d->msrecord->starttime;
+}
+
+qint64 QtMiniSeedRecord::endTime() const
+{
+    return d->msrecord->starttime
+           + static_cast<hptime_t>(1000000.0
+                                   / d->msrecord->samprate
+                                   * d->msrecord->samplecnt);
 }
 
 double QtMiniSeedRecord::sampleRate() const
