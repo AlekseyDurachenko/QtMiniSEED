@@ -50,6 +50,7 @@ public:
 
     inline qint32 recordSize() const;
     inline const char *recordData() const;
+    inline void *datasamples() const;
 
 private:
     QExplicitlySharedDataPointer<QtMiniSeedRecordData> d;
@@ -145,6 +146,11 @@ qint32 QtMiniSeedRecord::recordSize() const
 const char *QtMiniSeedRecord::recordData() const
 {
     return d->msrecord->record;
+}
+
+void *QtMiniSeedRecord::datasamples() const
+{
+    return d->msrecord->datasamples;
 }
 
 
